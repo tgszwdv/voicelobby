@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Lobby - League of Legends</title>
+    <!-- Carregando o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Fonte personalizada para o tema de LoL */
+      @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;500;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+        background-image: url("https://www.leagueoflegends.com/static/base/img/content/wallpaper/lol-key-art-2021-1920x1080.jpg");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+      }
+      .font-lol {
+        font-family: "Cinzel", serif;
+      }
+      .glassmorphism {
+        background: rgba(
+          1,
+          10,
+          19,
+          0.8
+        ); /* Um pouco mais opaco para legibilidade */
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(200, 155, 60, 0.2);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4"
+  >
+    <!-- Container Principal -->
+    <div id="app-container" class="w-full max-w-lg mx-auto">
+      <!-- O conteúdo da página (Home ou Lobby) será injetado aqui -->
+    </div>
+
+    <!-- Template da Página Inicial -->
+    <template id="home-page-template">
+      <div
+        class="glassmorphism p-8 rounded-lg shadow-2xl shadow-cyan-500/20 text-center transition-all duration-500"
+      >
+        <h1 class="text-5xl font-lol font-bold text-yellow-300 mb-2">
+          Voice Lobby
+        </h1>
+        <p class="text-gray-300 mb-8">
+          Crie uma sala de voz temporária para seu time de LoL em segundos.
+        </p>
+        <button
+          id="createBtn"
+          class="w-full bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-bold py-4 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <svg
+            class="animate-spin h-5 w-5 text-gray-900 hidden"
+            id="spinner"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <span>Criar Lobby de Voz</span>
+        </button>
+        <p id="error-message" class="text-red-400 mt-4"></p>
+      </div>
+    </template>
+
+    <!-- Template da Página do Lobby -->
+    <template id="lobby-page-template">
+      <div
+        class="glassmorphism p-6 sm:p-8 rounded-lg shadow-2xl shadow-yellow-500/20 text-center transition-all duration-500"
+      >
+        <h1 class="text-4xl font-lol font-bold text-yellow-300 mb-4">
+          Você está no Lobby
+        </h1>
+
+        <!-- [NOVO] Seção para compartilhar o link do site -->
+        <div class="mb-6">
+          <label
+            for="lobby-url"
+            class="block text-sm font-medium text-gray-300 mb-2"
+            >Compartilhe este link com seu time:</label
+          >
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              id="lobby-url"
+              readonly
+              class="w-full bg-gray-800/50 border border-gray-600 text-yellow-300 rounded-md p-2 text-sm"
+            />
+            <button
+              id="copy-lobby-link-btn"
+              class="bg-gray-700 hover:bg-gray-600 text-gray-200 font-bold p-2 rounded-md transition-colors flex-shrink-0"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                <path
+                  d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"
+                />
+              </svg>
+            </button>
+          </div>
+          <span
+            id="copy-feedback"
+            class="text-green-400 text-xs mt-1 h-4 block"
+          ></span>
+        </div>
+
+        <!-- Botão de Ação Principal para entrar no Discord -->
+        <a
+          id="join-discord-btn"
+          href="#"
+          target="_blank"
+          class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 inline-flex items-center justify-center gap-3 mb-4"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+            />
+          </svg>
+          Entrar no Chat de Voz
+        </a>
+
+        <!-- Lista de Usuários -->
+        <div class="mt-6 text-left">
+          <h3
+            class="font-bold text-lg text-gray-200 mb-3 flex items-center gap-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 text-cyan-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"
+              />
+            </svg>
+            Jogadores (<span id="user-count">0</span>/5):
+          </h3>
+          <ul id="user-list" class="space-y-2">
+            <!-- Usuários serão inseridos aqui -->
+          </ul>
+        </div>
+      </div>
+    </template>
+
+    <script>
+      const appContainer = document.getElementById("app-container");
+      const homePageTemplate = document.getElementById("home-page-template");
+      const lobbyPageTemplate = document.getElementById("lobby-page-template");
+
+      const API_BASE_URL = "http://localhost:3000/api"; // Mude para a URL do Render quando for para produção
+      let statusInterval = null;
+
+      // --- Lógica de Roteamento ---
+      window.addEventListener("load", () => {
+        const params = new URLSearchParams(window.location.search);
+        const lobbyId = params.get("id");
+
+        if (lobbyId) {
+          showLobbyPage(lobbyId);
+        } else {
+          showHomePage();
+        }
+      });
+
+      // --- Funções da Página Inicial ---
+      function showHomePage() {
+        appContainer.innerHTML = homePageTemplate.innerHTML;
+        const createBtn = document.getElementById("createBtn");
+        const spinner = document.getElementById("spinner");
+        const errorMessage = document.getElementById("error-message");
+
+        createBtn.addEventListener("click", async () => {
+          createBtn.disabled = true;
+          spinner.classList.remove("hidden");
+          errorMessage.textContent = "";
+
+          try {
+            const response = await fetch(`${API_BASE_URL}/create-lobby`, {
+              method: "POST",
+            });
+            if (!response.ok) throw new Error("Falha ao contatar o servidor.");
+
+            const data = await response.json();
+            window.location.search = `?id=${data.channelId}`; // Redireciona para a página do lobby
+          } catch (error) {
+            errorMessage.textContent = "Erro ao criar lobby. Tente novamente.";
+            console.error(error);
+            createBtn.disabled = false;
+            spinner.classList.add("hidden");
+          }
+        });
+      }
+
+      // --- Funções da Página do Lobby ---
+      function showLobbyPage(lobbyId) {
+        appContainer.innerHTML = lobbyPageTemplate.innerHTML;
+
+        // Busca o link de convite do Discord
+        fetch(`${API_BASE_URL}/lobby-info/${lobbyId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.inviteUrl) {
+              document.getElementById("join-discord-btn").href = data.inviteUrl;
+            } else {
+              throw new Error("Link de convite não encontrado.");
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+            const joinBtn = document.getElementById("join-discord-btn");
+            joinBtn.textContent = "Lobby Expirado";
+            joinBtn.removeAttribute("href");
+            joinBtn.classList.add("bg-red-600", "cursor-not-allowed");
+          });
+
+        // [MODIFICADO] Configura a seção de compartilhar link
+        const lobbyUrlInput = document.getElementById("lobby-url");
+        const copyBtn = document.getElementById("copy-lobby-link-btn");
+        const copyFeedback = document.getElementById("copy-feedback");
+
+        lobbyUrlInput.value = window.location.href; // Mostra o link do site
+
+        copyBtn.addEventListener("click", () => {
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            copyFeedback.textContent =
+              "Link copiado para a área de transferência!";
+            setTimeout(() => {
+              copyFeedback.textContent = "";
+            }, 2000);
+          });
+        });
+
+        // Inicia a atualização da lista de usuários
+        startLobbyStatusPolling(lobbyId);
+      }
+
+      function startLobbyStatusPolling(lobbyId) {
+        if (statusInterval) clearInterval(statusInterval);
+
+        const updateStatus = async () => {
+          try {
+            const response = await fetch(
+              `${API_BASE_URL}/lobby-status/${lobbyId}`
+            );
+            if (response.status === 404) {
+              clearInterval(statusInterval);
+              document.getElementById(
+                "user-list"
+              ).innerHTML = `<li class="text-red-400 p-2 rounded-md bg-red-900/50">Lobby não existe mais.</li>`;
+              return;
+            }
+            if (!response.ok) return;
+
+            const data = await response.json();
+            const userList = document.getElementById("user-list");
+            const userCount = document.getElementById("user-count");
+
+            userCount.textContent = data.userCount;
+            userList.innerHTML = ""; // Limpa a lista para redesenhar
+
+            if (data.users.length > 0) {
+              data.users.forEach((user) => {
+                // [MODIFICADO] Adiciona ícone ao lado do nome do usuário
+                const li = document.createElement("li");
+                li.className =
+                  "text-gray-200 bg-gray-800/60 p-3 rounded-md flex items-center gap-3";
+                li.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                </svg>
+                                <span>${user}</span>
+                            `;
+                userList.appendChild(li);
+              });
+            } else {
+              userList.innerHTML = `<li class="text-gray-500 italic">Aguardando jogadores...</li>`;
+            }
+          } catch (error) {
+            console.error(error);
+            clearInterval(statusInterval);
+          }
+        };
+
+        updateStatus();
+        statusInterval = setInterval(updateStatus, 5000); // Atualiza a cada 5 segundos
+      }
+    </script>
+  </body>
+</html>

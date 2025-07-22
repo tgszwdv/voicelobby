@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Lobby - League of Legends</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;500;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+        background-image: url("https://www.leagueoflegends.com/static/base/img/content/wallpaper/lol-key-art-2021-1920x1080.jpg");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+      }
+      .font-lol {
+        font-family: "Cinzel", serif;
+      }
+      .glassmorphism {
+        background: rgba(1, 10, 19, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(200, 155, 60, 0.2);
+      }
+      .role-icon {
+        transition: all 0.3s ease;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4"
+  >
+    <div id="app-container" class="w-full max-w-lg mx-auto"></div>
+
+    <!-- Template da Página Inicial -->
+    <template id="home-page-template">
+      <div
+        class="glassmorphism p-8 rounded-lg shadow-2xl shadow-cyan-500/20 text-center"
+      >
+        <h1 class="text-5xl font-lol font-bold text-yellow-300 mb-2">
+          Voice Lobby
+        </h1>
+        <p class="text-gray-300 mb-8">
+          Crie uma sala de voz temporária para seu time de LoL em segundos.
+        </p>
+        <button
+          id="createBtn"
+          class="w-full bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-bold py-4 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <svg
+            class="animate-spin h-5 w-5 text-gray-900 hidden"
+            id="spinner"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <span>Criar Lobby de Voz</span>
+        </button>
+        <p id="error-message" class="text-red-400 mt-4"></p>
+      </div>
+    </template>
+
+    <!-- Template da Página do Lobby (Visão Completa) -->
+    <template id="lobby-page-template">
+      <div
+        class="glassmorphism p-6 sm:p-8 rounded-lg shadow-2xl shadow-yellow-500/20 text-center"
+      >
+        <h1 class="text-4xl font-lol font-bold text-yellow-300 mb-4">
+          Lobby do Time
+        </h1>
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-300 mb-2"
+            >Compartilhe o link desta página com seu time:</label
+          >
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              id="lobby-url"
+              readonly
+              class="w-full bg-gray-800/50 border border-gray-600 text-yellow-300 rounded-md p-2 text-sm"
+            />
+            <button
+              id="copy-lobby-link-btn"
+              class="bg-gray-700 hover:bg-gray-600 text-gray-200 font-bold p-2 rounded-md transition-colors flex-shrink-0"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                <path
+                  d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"
+                />
+              </svg>
+            </button>
+          </div>
+          <span
+            id="copy-feedback"
+            class="text-green-400 text-xs mt-1 h-4 block"
+          ></span>
+        </div>
+
+        <a
+          id="join-discord-btn"
+          href="#"
+          target="_blank"
+          class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105 inline-flex items-center justify-center gap-3 mb-6"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+            />
+          </svg>
+          Entrar no Chat de Voz
+        </a>
+
+        <div id="claimed-roles-section" class="text-left mb-6">
+          <h3
+            class="font-bold text-lg text-gray-200 mb-3 border-b-2 border-yellow-400/20 pb-2"
+          >
+            Jogadores no Lobby
+          </h3>
+          <div id="claimed-roles-list" class="space-y-3"></div>
+        </div>
+
+        <div id="available-roles-section" class="text-left">
+          <h3
+            class="font-bold text-lg text-gray-200 mb-3 border-b-2 border-cyan-400/20 pb-2"
+          >
+            Posições Vagas
+          </h3>
+          <!-- [MODIFICADO] Layout para ícones horizontais -->
+          <div
+            id="available-roles-list"
+            class="flex flex-wrap justify-center gap-4 pt-2"
+          ></div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Template para a tela de Seleção de Role -->
+    <template id="role-selection-template">
+      <div
+        class="glassmorphism p-6 sm:p-8 rounded-lg shadow-2xl shadow-cyan-500/20 text-center"
+      >
+        <h1 class="text-4xl font-lol font-bold text-yellow-300 mb-4">
+          Escolha sua Posição
+        </h1>
+        <p class="text-gray-300 mb-8">
+          Para entrar no lobby, primeiro escolha uma das posições vagas abaixo.
+        </p>
+        <!-- [MODIFICADO] Layout para ícones horizontais -->
+        <div
+          id="role-selection-list"
+          class="flex flex-wrap justify-center gap-4"
+        >
+          <!-- Posições para seleção aparecem aqui -->
+        </div>
+      </div>
+    </template>
+
+    <script>
+      const appContainer = document.getElementById("app-container");
+      const homePageTemplate = document.getElementById("home-page-template");
+      const lobbyPageTemplate = document.getElementById("lobby-page-template");
+      const roleSelectionTemplate = document.getElementById(
+        "role-selection-template"
+      );
+
+      const API_BASE_URL = "http://localhost:3000/api";
+      let statusInterval = null;
+
+      const roleIcons = {
+        top: `<img src="https://raw.githubusercontent.com/InFinity54/LoL_DDragon/master/extras/lanes/top.png" alt="Top Lane" title="Top Lane" class="w-12 h-12 role-icon">`,
+        jungle: `<img src="https://raw.githubusercontent.com/InFinity54/LoL_DDragon/master/extras/lanes/jungle.png" alt="Jungle" title="Jungle" class="w-12 h-12 role-icon">`,
+        mid: `<img src="https://raw.githubusercontent.com/InFinity54/LoL_DDragon/master/extras/lanes/middle.png" alt="Mid Lane" title="Mid Lane" class="w-12 h-12 role-icon">`,
+        adc: `<img src="https://raw.githubusercontent.com/InFinity54/LoL_DDragon/master/extras/lanes/bottom.png" alt="Bottom Lane" title="Bottom Lane (ADC)" class="w-12 h-12 role-icon">`,
+        support: `<img src="https://raw.githubusercontent.com/InFinity54/LoL_DDragon/master/extras/lanes/support.png" alt="Support" title="Support" class="w-12 h-12 role-icon">`,
+      };
+
+      window.addEventListener("load", () => {
+        const lobbyId = new URLSearchParams(window.location.search).get("id");
+        if (lobbyId) {
+          const userRole = localStorage.getItem(`lobby-role-${lobbyId}`);
+          if (userRole) {
+            showLobbyPage(lobbyId);
+          } else {
+            showRoleSelectionPage(lobbyId);
+          }
+        } else {
+          showHomePage();
+        }
+      });
+
+      function showHomePage() {
+        appContainer.innerHTML = homePageTemplate.innerHTML;
+        const createBtn = document.getElementById("createBtn");
+        createBtn.addEventListener("click", async () => {
+          createBtn.disabled = true;
+          document.getElementById("spinner").classList.remove("hidden");
+          try {
+            const response = await fetch(`${API_BASE_URL}/create-lobby`, {
+              method: "POST",
+            });
+            if (!response.ok) throw new Error("Falha ao criar lobby.");
+            const data = await response.json();
+            window.location.search = `?id=${data.channelId}`;
+          } catch (error) {
+            document.getElementById("error-message").textContent =
+              "Erro ao criar lobby. Tente novamente.";
+            createBtn.disabled = false;
+            document.getElementById("spinner").classList.add("hidden");
+          }
+        });
+      }
+
+      async function showRoleSelectionPage(lobbyId) {
+        appContainer.innerHTML = roleSelectionTemplate.innerHTML;
+        const selectionList = document.getElementById("role-selection-list");
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/lobby-status/${lobbyId}`
+          );
+          if (!response.ok) throw new Error("Lobby não encontrado.");
+          const data = await response.json();
+
+          selectionList.innerHTML = "";
+          for (const [role, username] of Object.entries(data.claimedRoles)) {
+            if (username === null) {
+              const roleEl = document.createElement("div");
+              // [MODIFICADO] Apenas o ícone clicável
+              roleEl.className =
+                "p-3 rounded-full glassmorphism hover:bg-cyan-900/50 cursor-pointer transition-all transform hover:scale-110";
+              roleEl.innerHTML = roleIcons[role];
+              roleEl.addEventListener("click", () =>
+                claimRoleAndReload(lobbyId, role)
+              );
+              selectionList.appendChild(roleEl);
+            }
+          }
+        } catch (error) {
+          renderLobbyExpired();
+        }
+      }
+
+      function showLobbyPage(lobbyId) {
+        appContainer.innerHTML = lobbyPageTemplate.innerHTML;
+        document.getElementById("lobby-url").value = window.location.href;
+        document
+          .getElementById("copy-lobby-link-btn")
+          .addEventListener("click", () => {
+            navigator.clipboard.writeText(window.location.href);
+            document.getElementById("copy-feedback").textContent =
+              "Link copiado!";
+            setTimeout(() => {
+              document.getElementById("copy-feedback").textContent = "";
+            }, 2000);
+          });
+        startLobbyStatusPolling(lobbyId);
+      }
+
+      function startLobbyStatusPolling(lobbyId) {
+        if (statusInterval) clearInterval(statusInterval);
+        const updateStatus = async () => {
+          try {
+            const response = await fetch(
+              `${API_BASE_URL}/lobby-status/${lobbyId}`
+            );
+            if (!response.ok) {
+              if (response.status === 404) renderLobbyExpired();
+              clearInterval(statusInterval);
+              return;
+            }
+            const data = await response.json();
+            if (data && data.claimedRoles) {
+              renderLobby(lobbyId, data.claimedRoles, data.inviteUrl);
+            }
+          } catch (error) {
+            console.error(error);
+            clearInterval(statusInterval);
+          }
+        };
+        updateStatus();
+        statusInterval = setInterval(updateStatus, 3000);
+      }
+
+      function renderLobby(lobbyId, claimedRoles, inviteUrl) {
+        const claimedList = document.getElementById("claimed-roles-list");
+        const availableList = document.getElementById("available-roles-list");
+        const joinBtn = document.getElementById("join-discord-btn");
+        if (!claimedList || !availableList || !joinBtn) return;
+
+        joinBtn.href = inviteUrl;
+        claimedList.innerHTML = "";
+        availableList.innerHTML = "";
+        let claimedCount = 0;
+        const myRole = localStorage.getItem(`lobby-role-${lobbyId}`);
+
+        for (const [role, username] of Object.entries(claimedRoles)) {
+          if (username !== null) {
+            claimedCount++;
+            const roleEl = document.createElement("div");
+            roleEl.className =
+              "glassmorphism p-4 rounded-lg flex items-center gap-4";
+            const textHTML = `<div class="flex-grow"><p class="font-bold text-lg text-yellow-200">${username}</p><p class="text-sm uppercase text-gray-400">${role}</p></div>`;
+            roleEl.innerHTML = roleIcons[role] + textHTML;
+            claimedList.appendChild(roleEl);
+          } else {
+            // [MODIFICADO] Renderiza apenas o ícone na lista de vagas
+            const roleEl = document.createElement("div");
+            roleEl.className = "p-3 rounded-full glassmorphism transition-all";
+            roleEl.innerHTML = roleIcons[role];
+
+            if (myRole) {
+              roleEl.classList.add(
+                "cursor-not-allowed",
+                "opacity-40",
+                "grayscale"
+              );
+            } else {
+              roleEl.classList.add(
+                "hover:bg-cyan-900/50",
+                "cursor-pointer",
+                "transform",
+                "hover:scale-110"
+              );
+              roleEl.addEventListener("click", () =>
+                claimRoleAndReload(lobbyId, role)
+              );
+            }
+            availableList.appendChild(roleEl);
+          }
+        }
+        if (claimedCount === 0) {
+          claimedList.innerHTML = `<p class="text-gray-500 italic px-4">Nenhum jogador reivindicou uma posição ainda.</p>`;
+        }
+      }
+
+      async function claimRoleAndReload(lobbyId, role) {
+        const username = prompt(
+          `Qual seu nome ou nick para a posição de ${role.toUpperCase()}?`
+        );
+        if (!username || username.trim() === "") return;
+
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/claim-role/${lobbyId}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ role, username: username.trim() }),
+            }
+          );
+          const data = await response.json();
+          if (!response.ok) {
+            alert(`Erro: ${data.error}`);
+          } else {
+            localStorage.setItem(`lobby-role-${lobbyId}`, role);
+            window.location.reload();
+          }
+        } catch (error) {
+          alert("Não foi possível reivindicar a posição.");
+        }
+      }
+
+      function renderLobbyExpired() {
+        const container = document.getElementById("app-container");
+        container.innerHTML = `<div class="glassmorphism text-red-400 p-8 rounded-md bg-red-900/50 text-center">Este lobby expirou ou não existe mais.</div>`;
+      }
+    </script>
+  </body>
+</html>
