@@ -164,20 +164,6 @@
         background-color: #2ad469;
       }
 
-      /* NOVO: Estilo para o botão vermelho (Cancelar) */
-      .lol-button.red {
-        border-color: #aa3a3a;
-      }
-      .lol-button.red::before {
-        background-color: #c83c3c;
-      }
-      .lol-button.red:hover::before {
-        background-color: #e04a4a;
-      }
-      .lol-button.red:hover {
-        border-color: #f0e6d2;
-      }
-
       .lol-button:disabled {
         filter: grayscale(80%) brightness(0.7);
         cursor: not-allowed;
@@ -256,7 +242,7 @@
           Voice Lobby
         </h1>
         <p class="text-gray-300 mb-8">
-          Crie uma sala de voice para seu time de LoL em segundos.
+          Crie uma sala de voz temporária para seu time de LoL em segundos.
         </p>
         <button id="createBtn" class="lol-button">
           <svg class="lol-icon" id="btn-icon">
@@ -302,7 +288,7 @@
           class="glassmorphism p-6 sm:p-8 rounded-lg text-center static-glow animate-fade-in"
         >
           <h1 class="text-4xl font-lol font-bold text-yellow-300 mb-4">
-            Lobby
+            Lobby do Time
           </h1>
           <div class="mb-6">
             <label class="block text-sm font-medium text-gray-300 mb-2"
@@ -693,8 +679,7 @@
                     <p class="text-gray-300 mb-6">Qual seu nome ou nick?</p>
                     <input id="username-input" type="text" class="w-full bg-gray-800/50 border border-gray-600 text-yellow-300 rounded-md p-2 mb-6" placeholder="Seu Nick" autocomplete="off" maxlength="20">
                     <div class="flex justify-center gap-4">
-                        <!-- BOTÃO MODIFICADO -->
-                        <button id="cancel-btn" class="lol-button red"><span class="button-text">Cancelar</span></button>
+                        <button id="cancel-btn" class="lol-button"><span class="button-text">Cancelar</span></button>
                         <button id="confirm-btn" class="lol-button green"><span class="button-text">Confirmar</span></button>
                     </div>
                 </div>
