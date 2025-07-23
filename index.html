@@ -67,7 +67,7 @@
         opacity: 0.8;
       }
 
-      /* ===== NOVA Animação do Título do Lobby ===== */
+      /* Animação do Título do Lobby */
       @keyframes reveal-title {
         from {
           opacity: 0;
@@ -83,7 +83,7 @@
         opacity: 0; /* Estado inicial */
       }
 
-      /* ===== Estilo de Botão Retangular ===== */
+      /* Estilo de Botão Retangular */
       .lol-button {
         position: relative;
         display: inline-flex;
@@ -92,7 +92,7 @@
         background-color: #010a13;
         border: 2px solid #c89b3c;
         padding: 12px 25px 12px 55px; /* y, right, y, left */
-        border-radius: 8px; /* Cantos arredondados */
+        border-radius: 8px;
         color: #f0e6d2;
         font-family: "Cinzel", serif;
         font-weight: 700;
@@ -103,7 +103,7 @@
         transition: all 0.2s ease-in-out;
         -webkit-tap-highlight-color: transparent;
         z-index: 1;
-        overflow: hidden; /* Garante que o ::before não vaze */
+        overflow: hidden;
       }
 
       .lol-button:hover {
@@ -141,7 +141,6 @@
         z-index: 2;
       }
 
-      /* Animação de Brilho */
       @keyframes pulse-glow {
         0%,
         100% {
@@ -154,13 +153,12 @@
         }
       }
 
-      /* Variação Verde para o botão de entrar com animação */
       .lol-button.green {
         animation: pulse-glow 2.5s infinite ease-in-out;
       }
 
       .lol-button.green::before {
-        background-color: #1ed760; /* Verde mais vibrante */
+        background-color: #1ed760;
       }
       .lol-button.green:hover::before {
         background-color: #2ad469;
@@ -170,7 +168,7 @@
         filter: grayscale(80%) brightness(0.7);
         cursor: not-allowed;
         transform: none;
-        animation: none; /* Desativa a animação quando desabilitado */
+        animation: none;
       }
       .lol-button:disabled:hover {
         border-color: #c89b3c;
@@ -185,6 +183,36 @@
         height: 20px;
         width: 20px;
         z-index: 2;
+      }
+
+      /* Estilos do Modal Customizado */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+      .modal-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal-content {
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+      .modal-overlay.visible .modal-content {
+        transform: scale(1);
       }
     </style>
   </head>
@@ -204,6 +232,9 @@
 
     <div id="app-container" class="w-full max-w-lg mx-auto"></div>
 
+    <!-- Container para o Modal -->
+    <div id="modal-container"></div>
+
     <!-- Template da Página Inicial -->
     <template id="home-page-template">
       <div class="glassmorphism p-8 rounded-lg text-center static-glow">
@@ -218,7 +249,7 @@
             <use xlink:href="#icon-lol"></use>
           </svg>
           <svg
-            class="spinner h-5 w-5 text-gray-200 hidden"
+            class="spinner h-5 w-5 text-gray-200 hidden animate-spin"
             id="spinner"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -247,7 +278,6 @@
     <!-- Template da Página do Lobby (Visão Completa) -->
     <template id="lobby-page-template">
       <div class="text-center">
-        <!-- Container para o título e o card -->
         <h2
           id="lobby-main-title"
           class="text-5xl font-lol font-bold text-yellow-300/80 mb-6 opacity-0"
@@ -351,7 +381,9 @@
     </template>
 
     <script>
+      // --- ELEMENTOS GLOBAIS E CONSTANTES ---
       const appContainer = document.getElementById("app-container");
+      const modalContainer = document.getElementById("modal-container");
       const homePageTemplate = document.getElementById("home-page-template");
       const lobbyPageTemplate = document.getElementById("lobby-page-template");
       const roleSelectionTemplate = document.getElementById(
@@ -369,6 +401,7 @@
         support: `<img src="https://raw.githubusercontent.com/InFinity54/LoL_DDragon/master/extras/lanes/support.png" alt="Support" title="Support" class="w-12 h-12 role-icon">`,
       };
 
+      // --- LÓGICA DE NAVEGAÇÃO ---
       function switchPage(template) {
         const content = template.content.cloneNode(true);
         appContainer.innerHTML = "";
@@ -389,6 +422,7 @@
         }
       });
 
+      // --- PÁGINAS DO APLICATIVO ---
       function showHomePage() {
         switchPage(homePageTemplate);
         const mainDiv = appContainer.querySelector(".glassmorphism");
@@ -446,7 +480,7 @@
               delay++;
 
               roleEl.addEventListener("click", () =>
-                claimRoleAndReload(lobbyId, role)
+                showUsernamePrompt(lobbyId, role)
               );
               selectionList.appendChild(roleEl);
             }
@@ -459,7 +493,6 @@
       function showLobbyPage(lobbyId) {
         switchPage(lobbyPageTemplate);
 
-        // Aplica a animação no título
         const lobbyTitle = document.getElementById("lobby-main-title");
         if (lobbyTitle) {
           lobbyTitle.classList.add("lobby-title-animated");
@@ -473,19 +506,20 @@
             lobbyUrlInput.select();
             document.execCommand("copy");
 
-            document.getElementById("copy-feedback").textContent =
-              "Link copiado!";
+            const feedbackEl = document.getElementById("copy-feedback");
+            feedbackEl.textContent = "Link copiado!";
             setTimeout(() => {
-              document.getElementById("copy-feedback").textContent = "";
+              feedbackEl.textContent = "";
             }, 2000);
           });
         startLobbyStatusPolling(lobbyId);
       }
 
+      // --- LÓGICA DO LOBBY ---
       function startLobbyStatusPolling(lobbyId) {
         if (statusInterval) clearInterval(statusInterval);
 
-        let isFirstRender = true; // Flag para controlar a primeira renderização
+        let isFirstRender = true;
 
         const updateStatus = async () => {
           try {
@@ -505,10 +539,10 @@
                 data.inviteUrl,
                 isFirstRender
               );
-              isFirstRender = false; // Desativa a flag após a primeira renderização
+              isFirstRender = false;
             }
           } catch (error) {
-            console.error(error);
+            console.error("Erro ao buscar status do lobby:", error);
             clearInterval(statusInterval);
           }
         };
@@ -523,12 +557,12 @@
         if (!claimedList || !availableList || !joinBtn) return;
 
         joinBtn.href = inviteUrl;
-
         claimedList.innerHTML = "";
         availableList.innerHTML = "";
 
         const myRole = localStorage.getItem(`lobby-role-${lobbyId}`);
         let claimedCount = 0;
+        let animationDelay = 0;
 
         for (const [role, username] of Object.entries(claimedRoles)) {
           const roleEl = document.createElement("div");
@@ -538,19 +572,17 @@
             claimedCount++;
             roleEl.className =
               "glassmorphism p-4 rounded-lg flex items-center gap-4";
-
-            // Adiciona a animação apenas na primeira renderização
             if (isFirstRender) {
+              roleEl.style.animationDelay = `${animationDelay * 100}ms`;
               roleEl.classList.add("animate-fade-in");
+              animationDelay++;
             }
-
             const textHTML = `<div class="flex-grow"><p class="font-bold text-lg text-yellow-200">${username}</p><p class="text-sm uppercase text-gray-400">${role}</p></div>`;
             roleEl.innerHTML = iconHTML + textHTML;
             claimedList.appendChild(roleEl);
           } else {
             roleEl.className = "p-3 rounded-full glassmorphism transition-all";
             roleEl.innerHTML = iconHTML;
-
             if (myRole) {
               roleEl.classList.add(
                 "cursor-not-allowed",
@@ -565,7 +597,7 @@
                 "hover:scale-110"
               );
               roleEl.addEventListener("click", () =>
-                claimRoleAndReload(lobbyId, role)
+                showUsernamePrompt(lobbyId, role)
               );
             }
             availableList.appendChild(roleEl);
@@ -577,10 +609,7 @@
         }
       }
 
-      async function claimRoleAndReload(lobbyId, role) {
-        const username = prompt(
-          `Qual seu nome ou nick para a posição de ${role.toUpperCase()}?`
-        );
+      async function claimRoleAndReload(lobbyId, role, username) {
         if (!username || username.trim() === "") return;
 
         try {
@@ -594,29 +623,32 @@
           );
           const data = await response.json();
           if (!response.ok) {
-            alert(`Erro: ${data.error}`);
+            showErrorModal(
+              `Erro: ${data.error || "Não foi possível reivindicar a posição."}`
+            );
           } else {
             localStorage.setItem(`lobby-role-${lobbyId}`, role);
             window.location.reload();
           }
         } catch (error) {
-          alert("Não foi possível reivindicar a posição.");
+          showErrorModal(
+            "Não foi possível conectar ao servidor para reivindicar a posição."
+          );
         }
       }
 
       function renderLobbyExpired() {
         if (statusInterval) clearInterval(statusInterval);
-        const container = document.getElementById("app-container");
-        container.innerHTML = `
-                <div class="glassmorphism text-red-400 p-8 rounded-md bg-red-900/50 text-center animate-fade-in">
-                    <h2 class="text-3xl font-lol font-bold text-red-300 mb-4">Lobby Expirado</h2>
-                    <p class="text-red-200 mb-6">Este lobby não existe mais.</p>
-                    <p id="redirect-timer" class="text-gray-300 mb-6">Redirecionando para a página inicial em 5 segundos...</p>
-                    <button id="home-btn" class="lol-button">
-                        <span class="button-text">Voltar para a Página Inicial</span>
-                    </button>
-                </div>
-            `;
+        appContainer.innerHTML = `
+          <div class="glassmorphism text-red-400 p-8 rounded-md bg-red-900/50 text-center animate-fade-in">
+              <h2 class="text-3xl font-lol font-bold text-red-300 mb-4">Lobby Expirado</h2>
+              <p class="text-red-200 mb-6">Este lobby não existe mais ou o link é inválido.</p>
+              <p id="redirect-timer" class="text-gray-300 mb-6">Redirecionando para a página inicial em 5 segundos...</p>
+              <button id="home-btn" class="lol-button">
+                  <span class="button-text">Página Inicial</span>
+              </button>
+          </div>
+        `;
 
         const homeBtn = document.getElementById("home-btn");
         const timerEl = document.getElementById("redirect-timer");
@@ -636,6 +668,96 @@
             window.location.href = window.location.pathname;
           }
         }, 1000);
+      }
+
+      // --- SISTEMA DE MODAL CUSTOMIZADO ---
+      function showUsernamePrompt(lobbyId, role) {
+        const modalHTML = `
+            <div id="prompt-modal" class="modal-overlay">
+                <div class="modal-content glassmorphism p-8 rounded-lg text-center static-glow w-full max-w-sm">
+                    <h2 class="text-2xl font-lol font-bold text-yellow-300 mb-4">Entrar como ${role.toUpperCase()}</h2>
+                    <p class="text-gray-300 mb-6">Qual seu nome ou nick?</p>
+                    <input id="username-input" type="text" class="w-full bg-gray-800/50 border border-gray-600 text-yellow-300 rounded-md p-2 mb-6" placeholder="Seu Nick" autocomplete="off" maxlength="20">
+                    <div class="flex justify-center gap-4">
+                        <button id="cancel-btn" class="lol-button"><span class="button-text">Cancelar</span></button>
+                        <button id="confirm-btn" class="lol-button green"><span class="button-text">Confirmar</span></button>
+                    </div>
+                </div>
+            </div>
+        `;
+        modalContainer.innerHTML = modalHTML;
+
+        const modal = document.getElementById("prompt-modal");
+        const usernameInput = document.getElementById("username-input");
+        const confirmBtn = document.getElementById("confirm-btn");
+        const cancelBtn = document.getElementById("cancel-btn");
+
+        // Adiciona a classe 'visible' para ativar a animação de entrada
+        setTimeout(() => modal.classList.add("visible"), 10);
+        usernameInput.focus();
+
+        const closeModal = () => {
+          modal.classList.remove("visible");
+          // Remove o modal do DOM após a animação de saída
+          setTimeout(() => modal.remove(), 300);
+        };
+
+        confirmBtn.onclick = () => {
+          const username = usernameInput.value;
+          if (username && username.trim() !== "") {
+            closeModal();
+            claimRoleAndReload(lobbyId, role, username);
+          } else {
+            usernameInput.classList.add("border-red-500");
+            setTimeout(
+              () => usernameInput.classList.remove("border-red-500"),
+              2000
+            );
+          }
+        };
+
+        usernameInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            confirmBtn.click();
+          }
+        });
+
+        cancelBtn.onclick = closeModal;
+        modal.onclick = (e) => {
+          if (e.target === modal) {
+            closeModal();
+          }
+        };
+      }
+
+      function showErrorModal(message) {
+        const modalHTML = `
+            <div id="error-modal" class="modal-overlay">
+                <div class="modal-content glassmorphism p-8 rounded-lg text-center static-glow w-full max-w-sm bg-red-900/50">
+                    <h2 class="text-2xl font-lol font-bold text-red-300 mb-4">Ocorreu um Erro</h2>
+                    <p class="text-red-200 mb-6">${message}</p>
+                    <button id="ok-btn" class="lol-button"><span class="button-text">OK</span></button>
+                </div>
+            </div>
+        `;
+        modalContainer.innerHTML = modalHTML;
+
+        const modal = document.getElementById("error-modal");
+        const okBtn = document.getElementById("ok-btn");
+
+        setTimeout(() => modal.classList.add("visible"), 10);
+
+        const closeModal = () => {
+          modal.classList.remove("visible");
+          setTimeout(() => modal.remove(), 300);
+        };
+
+        okBtn.onclick = closeModal;
+        modal.onclick = (e) => {
+          if (e.target === modal) {
+            closeModal();
+          }
+        };
       }
     </script>
   </body>
